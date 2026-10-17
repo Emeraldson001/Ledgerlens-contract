@@ -13,6 +13,12 @@
 //! `get_interface_metadata` and use the `fail_closed` constraint to reason
 //! about how unknown wallets and low-confidence scores should be handled.
 //!
+//! This example is intentionally the one-call minimum. The confidence-aware
+//! pattern recommended by `docs/consumer-integration-decision-guide.md`
+//! (`supports_interface("cgate")` probe + `query_risk_gate_with_confidence`)
+//! is shown in `examples/amm_gate_example.rs`; see
+//! `docs/example-pattern-audit.md` for why this one stays minimal.
+//!
 //! Build it as part of the workspace:
 //!
 //! ```text

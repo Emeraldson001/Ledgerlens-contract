@@ -163,6 +163,10 @@ integrations (`mock-amm`, `mock-lending`) depend on.
 - [ ] The AMM/lending mock integrations (`contracts/mock-amm`, `contracts/mock-lending`) still
       compile and their tests still pass against the changed interface — they're the executable
       proof that the guard-clause pattern in the README actually works, not just example code.
+- [ ] If this PR changes the *recommended* integration pattern (a new helper, a new preferred
+      gate variant), every example and reference tool is updated to it in the same PR — or given
+      a documented exception — and the table in
+      [`docs/example-pattern-audit.md`](example-pattern-audit.md) is updated (#1437).
 
 **Deep dive:** [`README.md` § Composability](../README.md#composability),
 [`docs/interface-spec.md`](interface-spec.md), [`docs/amm-integration-guide.md`](amm-integration-guide.md),

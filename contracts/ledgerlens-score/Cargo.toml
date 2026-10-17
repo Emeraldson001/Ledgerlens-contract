@@ -132,6 +132,11 @@ full = ["standard", "oracle", "dispute"]
 # in #1193). Operators wanting the minimal build use --no-default-features.
 default = ["standard"]
 
+[[bench]]
+name = "cost_of_correctness"
+harness = false
+path = "benches/cost_of_correctness.rs"
+
 # Reference integration showing how a third-party contract gates on a
 # LedgerLens risk score. Built as a library (it is a Soroban contract, not a
 # `fn main` binary) via: cargo build --example amm_gate -p ledgerlens-score

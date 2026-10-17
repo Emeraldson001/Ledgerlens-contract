@@ -1060,6 +1060,13 @@ command = "bash tests/test_tiers.test.sh"
 note = "hand-classified: the gate that decides what runs is itself on the fast path, so a regression in the checker cannot wait for a review cycle"
 
 [[unit]]
+id = "tests/test_ledgerlens_v3_shim.py"
+kind = "unit"
+tier = "standard"
+command = "python3 -m unittest discover -s tests -p 'test_ledgerlens_v3_shim.py'"
+reason = "interface-v3 compatibility shim (#1435) plus the legacy-consumer walkthrough; spawns a shell script, so kept off the contract's fast path"
+
+[[unit]]
 id = "tests/test_traceability.py"
 kind = "unit"
 tier = "standard"
@@ -1095,6 +1102,12 @@ kind = "integration"
 tier = "standard"
 
 [[unit]]
+id = "tools/schema-gen/src/c_header.rs"
+kind = "unit"
+tier = "standard"
+reason = "prototype C ABI header generator (#1438); runs with the schema-gen crate's lib tests"
+
+[[unit]]
 id = "tools/schema-gen::doctests"
 kind = "smoke"
 tier = "standard"
@@ -1117,6 +1130,12 @@ id = "contracts/ledgerlens-score/benches/batch_worst_case_profiles.rs"
 kind = "stress"
 command = "cargo bench -p ledgerlens-score --bench batch_worst_case_profiles"
 reason = "criterion measurement rather than an assertion: classified but deliberately outside the tier partition (docs/test-tiers.md)"
+
+[[benchmark]]
+id = "contracts/ledgerlens-score/benches/cost_of_correctness.rs"
+kind = "stress"
+command = "cargo bench -p ledgerlens-score --bench cost_of_correctness -- --check"
+reason = "per-feature cost attribution report (#1436); a measurement with a drift check against the committed report, outside the tier partition (docs/test-tiers.md)"
 
 [[benchmark]]
 id = "contracts/ledgerlens-score/benches/entry_point_budgets.rs"

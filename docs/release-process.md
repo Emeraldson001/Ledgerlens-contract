@@ -18,6 +18,26 @@ The release is **fail-closed**: if the reproducibility check fails, no release i
 
 ---
 
+## Pre-release Checklist
+
+Work through these before pushing a release tag:
+
+- [ ] `CHANGELOG.md` has an `[Unreleased]` section describing every change in
+      the release, including ABI/compatibility notes.
+- [ ] **Example & reference-tool pattern audit (recurring, #1437):** every file
+      under `examples/`, every `contracts/mock-*` consumer, and every tool under
+      `tools/` that calls LedgerLens uses the integration pattern currently
+      recommended by
+      [`docs/consumer-integration-decision-guide.md`](consumer-integration-decision-guide.md),
+      or has a documented reason not to. Re-run the audit and update its table
+      in [`docs/example-pattern-audit.md`](example-pattern-audit.md). New
+      examples added since the last release must appear in that table.
+- [ ] Generated artifacts are fresh: `cargo run -p schema-gen -- --check`
+      (including `--wasm <release wasm> --c-header --check` once the C header is
+      adopted, see [`docs/c-abi-header-spike.md`](c-abi-header-spike.md)).
+
+---
+
 ## Triggering a Release
 
 ### Tag Format

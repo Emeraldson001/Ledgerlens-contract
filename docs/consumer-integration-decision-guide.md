@@ -211,6 +211,10 @@ call consumes a fixed, bounded instruction budget:
 These calls are safe to invoke on every user-triggered transaction.  No
 caching, batching, or rate limiting is required at the consumer level.
 
+For how much each optional operator-side protection (embargo, confidence floor,
+gate allowlist, read quotas, …) adds to these calls, and a minimal-footprint
+deployment profile, see [`docs/cost-of-correctness.md`](cost-of-correctness.md).
+
 ---
 
 ## 8. Integration Checklist

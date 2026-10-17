@@ -62,6 +62,13 @@ as the v2 fields are at their original offsets — adding fields to the **end**
 of a struct is non-breaking. Reordering, removing, or inserting fields at any
 position other than the end is breaking.
 
+> Note: `#[contracttype]` structs are encoded in alphabetical field order and
+> decoded with an exact field set, so a binding generated for an older struct
+> cannot decode a newer one that gained fields. `RiskScore` v3 → current is
+> the worked example: see
+> [`docs/migration-guide-v3.md` § C1](migration-guide-v3.md#c1-riskscore-gained-four-fields-action-required-for-direct-decoders)
+> and [`docs/historical-wasm-compatibility.md`](historical-wasm-compatibility.md).
+
 ## 4. Announcement & Migration Timeline
 
 ```
@@ -145,6 +152,10 @@ Once a new interface version is deployed to `mainnet`:
   [`README.md § Upgrade Governance`](../README.md#upgrade-governance)
 - Migration guides for past breaking changes:
   [`CHANGELOG.md`](../CHANGELOG.md)
+- Migration guide from the earliest supported version (v3) to current, with a
+  per-change action-required determination and a zero-code-change shim for
+  v3 `RiskScore` decoders:
+  [`docs/migration-guide-v3.md`](migration-guide-v3.md)
 - Contributing guidelines (what counts as `types.rs`-breaking):
   [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 

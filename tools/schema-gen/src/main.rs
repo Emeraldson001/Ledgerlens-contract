@@ -7,11 +7,13 @@
 //! cargo run -p schema-gen                # native spec source (default)
 //! cargo run -p schema-gen -- --wasm target/wasm32-unknown-unknown/release/ledgerlens_score.wasm
 //! cargo run -p schema-gen -- --check     # exit non-zero if committed artifacts are stale
+//! cargo run -p schema-gen -- --wasm <path> --c-header   # prototype C ABI header (#1438)
 //! ```
 
 #![forbid(unsafe_code)]
 
 use anyhow::{bail, Context, Result};
+use schema_gen::c_header::{spec_to_c_header, C_HEADER_FILE};
 use schema_gen::{
     native_risk_score_struct, struct_to_json_schema, struct_to_python, struct_to_typescript,
     invocations_json_schema, wasm_risk_score_struct, DEFAULT_OUTPUT_DIR, INVOCATION_SCHEMA_FILE,
@@ -26,6 +28,7 @@ fn main() -> Result<()> {
     let mut out_dir = DEFAULT_OUTPUT_DIR.to_string();
     let mut check = false;
     let mut invocations = false;
+    let mut c_header = false;
 
     let mut i = 0;
     while i < args.len() {
@@ -42,6 +45,7 @@ fn main() -> Result<()> {
             }
             "--check" => check = true,
             "--invocations" => invocations = true,
+            "--c-header" => c_header = true,
             "--help" | "-h" => {
                 print_usage();
                 return Ok(());
@@ -110,6 +114,23 @@ fn main() -> Result<()> {
         write_if_changed(&dir.join(INVOCATION_SCHEMA_FILE), &schema)?;
         println!("schema-gen: {}", dir.join(INVOCATION_SCHEMA_FILE).display());
     }
+    if c_header {
+        let path = wasm_path
+            .as_ref()
+            .context("`--c-header` requires `--wasm` to read the full contract ABI")?;
+        let wasm = std::fs::read(path).with_context(|| format!("reading contract WASM {path}"))?;
+        let entries =
+            soroban_spec::read::from_wasm(&wasm).context("contract WASM spec must parse")?;
+        let header =
+            spec_to_c_header(&entries, &format!("contract WASM `{path}` (contractspecv0)"));
+        let c_dir = dir.join("c");
+        std::fs::create_dir_all(&c_dir)?;
+        let changed = write_if_changed(&c_dir.join(C_HEADER_FILE), &header)?;
+        println!("schema-gen: {}", c_dir.join(C_HEADER_FILE).display());
+        if check && changed {
+            bail!("generated C header is stale; rerun with `--wasm {path} --c-header`");
+        }
+    }
     Ok(())
 }
 
@@ -138,6 +159,7 @@ fn print_usage() {
          \x20  --out <dir>     Output directory (default: schemas/)\n\
          \x20  --check         Fail instead of rewriting whenever committed artifacts are stale\n\
          \x20  --invocations   Also emit the callable ABI input schema (requires --wasm)\n\
+         \x20  --c-header      Also emit the prototype C ABI header to <out>/c/ (requires --wasm)\n\
          \x20  -h, --help      Print this help\n"
     );
 }

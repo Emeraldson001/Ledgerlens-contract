@@ -2,15 +2,27 @@
 
 //! Minimal AMM swap implementation with LedgerLens risk gating.
 //!
-//! This example demonstrates:
+//! This example demonstrates the recommended integration pattern from
+//! `docs/consumer-integration-decision-guide.md` (§6, §8):
 //! - Importing the LedgerLens contract client.
-//! - Calling `query_risk_gate` from within a swap function.
+//! - Feature-detecting `cgate` with `supports_interface` and calling
+//!   `query_risk_gate_with_confidence` so signal quality is enforced.
+//! - Falling back to `query_risk_gate` with a stricter threshold on
+//!   deployments that do not advertise `cgate`.
 //! - Handling the gate result and rejecting high-risk wallets.
 
 #![no_std]
 
 use ledgerlens_score::LedgerLensScoreContractClient;
-use soroban_sdk::{contract, contracterror, contractimpl, Address, Env, Symbol};
+use soroban_sdk::{contract, contracterror, contractimpl, symbol_short, Address, Env, Symbol};
+
+/// Minimum LedgerLens confidence this AMM accepts (standard AMM profile,
+/// `docs/consumer-integration-decision-guide.md` §2.2).
+const MIN_CONFIDENCE: u32 = 50;
+
+/// How much stricter the plain gate is made when confidence cannot be
+/// enforced at the gate (decision guide §6 fallback).
+const NO_CONFIDENCE_THRESHOLD_PENALTY: u32 = 10;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -26,8 +38,9 @@ pub struct SimpleAMM;
 impl SimpleAMM {
     /// Execute a swap between two tokens, enforcing LedgerLens risk gating.
     ///
-    /// Before proceeding with the swap, this function calls `query_risk_gate`
-    /// to verify that the user's risk score is below the specified threshold.
+    /// Before proceeding with the swap, this function calls the LedgerLens gate
+    /// to verify that the user's risk score is below the specified threshold
+    /// with at least `MIN_CONFIDENCE` confidence.
     /// If the gate returns `false` (user is too risky, embargoed, or unknown),
     /// the swap is rejected.
     pub fn swap(
@@ -41,10 +54,21 @@ impl SimpleAMM {
         // 1. Build the LedgerLens client
         let client = LedgerLensScoreContractClient::new(&env, &ledgerlens_id);
 
-        // 2. Call query_risk_gate to check the user's risk score
-        // This function returns bool: true if score < threshold, false otherwise.
-        // It never panics and never raises an error — all failure cases collapse to false.
-        let passes_gate = client.query_risk_gate(&user, &asset_pair, &gate_threshold);
+        // 2. Ask the gate. Both gate functions return bool: true only if the
+        // score is below the threshold. They never panic and never raise an
+        // error — all failure cases (unknown, embargoed, paused) collapse to false.
+        // Prefer the confidence-aware gate when the deployment advertises it.
+        let passes_gate = if client.supports_interface(&symbol_short!("cgate")) {
+            client.query_risk_gate_with_confidence(
+                &user,
+                &asset_pair,
+                &gate_threshold,
+                &MIN_CONFIDENCE,
+            )
+        } else {
+            let stricter = gate_threshold.saturating_sub(NO_CONFIDENCE_THRESHOLD_PENALTY);
+            client.query_risk_gate(&user, &asset_pair, &stricter)
+        };
 
         // 3. Reject the swap if the user's risk gate fails
         if !passes_gate {

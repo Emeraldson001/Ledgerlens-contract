@@ -6,6 +6,11 @@ Status: Spike complete — recommendation below is ready for an ADR / implementa
 
 ## Summary
 
+> Follow-up: the same contract-spec pipeline now also emits a prototype,
+> dependency-free C ABI header (`schema-gen --wasm <path> --c-header`) for
+> integrators with no generated client. See
+> [`docs/c-abi-header-spike.md`](c-abi-header-spike.md) (#1438).
+
 `RiskScore` is defined once in Rust
 (`contracts/ledgerlens-score/src/types.rs`) and today every downstream consumer
 re-mirrors it by hand: TypeScript and Python SDKs, the dashboard, and the API

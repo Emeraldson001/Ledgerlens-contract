@@ -16,6 +16,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod c_header;
+
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Map, Value};
 use soroban_sdk::xdr::{
